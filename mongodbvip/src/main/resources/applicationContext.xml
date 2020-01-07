@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.springframework.org/schema/context
+                        http://www.springframework.org/schema/context/spring-context.xsd
+                        http://www.springframework.org/schema/tx
+                        http://www.springframework.org/schema/tx/spring-tx.xsd
+                        http://www.springframework.org/schema/data/mongo
+                        http://www.springframework.org/schema/data/mongo/spring-mongo.xsd">
+
+    <context:component-scan base-package="cn.enjoy">
+
+    </context:component-scan>
+
+    <!-- mongodb连接池配置 -->
+    <mongo:mongo-client id="mongo" host="192.168.244.123" port="27017">
+        <mongo:client-options
+                write-concern="ACKNOWLEDGED"
+                threads-allowed-to-block-for-connection-multiplier="5"
+                max-wait-time="1200"
+                connect-timeout="1000"/>
+    </mongo:mongo-client>
+
+    <!-- mongodb数据库工厂配置 -->
+    <mongo:db-factory dbname="lison" mongo-ref="mongo" />
+
+
+    <!-- mongodb模板配置 -->
+    <bean id="anotherMongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
+        <constructor-arg name="mongoDbFactory" ref="mongoDbFactory" />
+        <constructor-arg name="mongoConverter" ref="mappingConverter"/>
+    </bean>
+
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <bean id="transactionManager" class="org.springframework.data.mongodb.MongoTransactionManager">
+        <property name="dbFactory" ref="mongoDbFactory"/>
+    </bean>
+
+    <mongo:mapping-converter base-package="cn.enjoy.convert">
+        <mongo:custom-converters>
+            <mongo:converter>
+                <bean class="cn.enjoy.convert.BigDecimalToDecimal128Converter"/>
+            </mongo:converter>
+            <mongo:converter>
+                <bean class="cn.enjoy.convert.Decimal128ToBigDecimalConverter"/>
+            </mongo:converter>
+        </mongo:custom-converters>
+    </mongo:mapping-converter>
+
+</beans>
